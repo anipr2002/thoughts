@@ -1,56 +1,59 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { AiOutlineDownload, AiFillDelete } from "react-icons/ai";
 import { motion } from "framer-motion";
 import Logo from "./Logo";
+import Voicenotes from "./Voicenotes";
+import Timings from "./ui/Timings.tsx";
+import useTextEditorStore from "../store/textEditorStore.ts";
 
 const Texteditor = () => {
-  const [inputText, setInputText] = useState<string>("");
-  const [inputArray, setInputArray] = useState<string[]>([]);
-  const [displayedItems, setDisplayedItems] = useState<string[]>([]);
-  const [inView, setInView] = useState<boolean>(false);
-  const [mouseActive, setMouseActive] = useState<boolean>(false);
+  const {
+    inputText,
+    setInputText,
+    inputArray,
+    addInputText,
+    displayedItems,
+    inView,
+    setInView,
+    mouseActive,
+    setMouseActive,
+    downloadTxtFile,
+    clearFile,
+  } = useTextEditorStore();
 
-  //check if mouse moves for 3 seconds and then hide the icons
   useEffect(() => {
     const mouseMoveHandler = () => {
       setMouseActive(true);
     };
     window.addEventListener("mousemove", mouseMoveHandler);
     return () => window.removeEventListener("mousemove", mouseMoveHandler);
-  }, []);
+  }, [setMouseActive]);
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let timeout;
     if (mouseActive) {
       timeout = setTimeout(() => {
         setMouseActive(false);
       }, 3000);
     }
     return () => clearTimeout(timeout);
-  }, [mouseActive]);
+  }, [mouseActive, setMouseActive]);
 
   const setPlaceHolderText = () => {
-    if (inView) {
-      return "";
-    } else {
-      return "Enter your thoughts";
-    }
+    return inView ? "" : "Enter your thoughts...";
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e) => {
     setInputText(e.target.value);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e) => {
     if (e.key === "Enter" && inputText.trim() !== "") {
-      setInputArray([inputText, ...inputArray]);
-      setDisplayedItems([inputText, ...displayedItems]);
-      setInputText(""); // Clear the input field\
+      addInputText();
       setInView(true);
     }
   };
 
-  // Define a maximum number of displayed items
   const maxDisplayedItems = 5;
 
   const opacities = [0.1, 0.2, 0.3, 0.4, 1];
@@ -59,27 +62,12 @@ const Texteditor = () => {
   useEffect(() => {
     // Ensure inputArray length doesn't exceed maxDisplayedItems
     if (inputArray.length > maxDisplayedItems) {
-      setDisplayedItems(inputArray.slice(0, maxDisplayedItems));
+      // Update displayedItems
+      useTextEditorStore.setState({
+        displayedItems: inputArray.slice(0, maxDisplayedItems),
+      });
     }
   }, [inputArray]);
-
-  const downloadTxtFile = () => {
-    const ascendingArray = [...inputArray].reverse(); // Create a reversed copy
-    const element = document.createElement("a");
-    const file = new Blob([ascendingArray.join("\n")], {
-      type: "text/plain;charset=utf-8",
-    });
-    element.href = URL.createObjectURL(file);
-    element.download = "thoughts_" + ascendingArray[0] + ".txt";
-    document.body.appendChild(element);
-    element.click();
-  };
-
-  const clearFile = () => {
-    setInputArray([]);
-    setDisplayedItems([]);
-    setInView(false);
-  };
 
   return (
     <div className="w-screen h-screen bg-[#27272B] text-[#F9A28E] font-mono text-3xl flex flex-col justify-center items-center">
@@ -102,11 +90,12 @@ const Texteditor = () => {
               </p>
             ))}
         </div>
+
         <input
           type="text"
           placeholder={setPlaceHolderText()}
           className="bg-transparent w-full text-center flex-1 flex items-center justify-center
-          absolute top-[50%] "
+           absolute top-[50%]"
           value={inputText}
           onChange={handleInputChange}
           onKeyDown={handleKeyPress}
@@ -138,10 +127,17 @@ const Texteditor = () => {
         </motion.div>
 
         <Logo />
+        <Voicenotes />
 
         <div className="absolute bottom-0 right-0 p-3 ">
           <span className=" md:text-5xl text-lg opacity-20 font-mono">
             {inputArray.length}
+          </span>
+        </div>
+
+        <div className="absolute bottom-0 left-0 p-3 ">
+          <span className=" md:text-5xl text-lg opacity-20 font-mono">
+            <Timings />
           </span>
         </div>
       </div>
