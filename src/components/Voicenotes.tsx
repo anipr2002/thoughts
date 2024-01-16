@@ -1,4 +1,5 @@
 import { BsFillMicFill } from "react-icons/bs";
+import useTextEditorStore from "../store/textEditorStore";
 import React, { useState, useEffect } from "react";
 
 const Voicenotes = () => {
@@ -55,7 +56,7 @@ const Voicenotes = () => {
 
   return (
     <div className="absolute bottom-24 left-[47%] p-10">
-      <div className="" role="button">
+      <div className="" role="button" onClick={handleSaveNote}>
         <BsFillMicFill />
       </div>
     </div>

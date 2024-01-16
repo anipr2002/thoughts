@@ -6,6 +6,20 @@ import Voicenotes from "./Voicenotes";
 import Timings from "./ui/Timings.tsx";
 import useTextEditorStore from "../store/textEditorStore.ts";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+// import { Input } from "@/components/ui/input";
+import { DialogClose } from "@radix-ui/react-dialog";
+
 const Texteditor = () => {
   const {
     inputText,
@@ -19,6 +33,8 @@ const Texteditor = () => {
     setMouseActive,
     downloadTxtFile,
     clearFile,
+    downloadName,
+    setDownloadName,
   } = useTextEditorStore();
 
   useEffect(() => {
@@ -105,12 +121,50 @@ const Texteditor = () => {
           className="absolute top-0 right-0 p-3 md:p-10 cursor-pointer text-[#F9A28E]"
           animate={{ opacity: mouseActive ? 1 : 0 }}
           role="button"
-          onClick={downloadTxtFile}
+          // onClick={downloadTxtFile}
         >
-          <AiOutlineDownload
-            size={40}
-            className=" opacity-50 hover:opacity-100 transition-all ease-in"
-          />
+          <Dialog>
+            <DialogTrigger asChild>
+              <AiOutlineDownload
+                size={40}
+                className=" opacity-50 hover:opacity-100 transition-all ease-in"
+              />
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] dark">
+              <DialogHeader>
+                <DialogTitle className="text-center text-[#F8A28E]">
+                  Download Text File
+                </DialogTitle>
+                <DialogDescription className=" pt-4 text-center max-w-prose ">
+                  Click 'Download' to start downloading the file. If unsure,
+                  click 'Cancel'.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right text-white">
+                    Filename
+                  </Label>
+                  <input
+                    type="text"
+                    id="name"
+                    value={downloadName}
+                    onChange={(e) => setDownloadName(e.target.value)}
+                    className="col-span-3 border border-white rounded-md bg-[#0A0A0A] text-white p-2"
+                    placeholder="Enter filename"
+                  />
+                </div>
+              </div>
+              <DialogFooter className="flex justify-between">
+                <Button type="submit" onClick={downloadTxtFile}>
+                  Save changes
+                </Button>
+                <DialogClose asChild>
+                  <Button variant="secondary">Cancel</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </motion.div>
 
         <motion.div

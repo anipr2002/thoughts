@@ -13,6 +13,10 @@ interface TextEditorState {
   clearFile: () => void;
   setInView: (value: boolean) => void;
   setMouseActive: (value: boolean) => void;
+  isListening: boolean;
+  setIsListening: (value: boolean) => void;
+  downloadName: string;
+  setDownloadName: (value: string) => void;
 }
 
 const useTextEditorStore = create<TextEditorState>((set) => ({
@@ -21,6 +25,10 @@ const useTextEditorStore = create<TextEditorState>((set) => ({
   displayedItems: [],
   inView: false,
   mouseActive: false,
+  isListening: false,
+  downloadName: '',
+
+  setDownloadName: (value) => set({ downloadName: value }),
 
   setInputText: (text) => set({ inputText: text }),
 
@@ -48,6 +56,8 @@ const useTextEditorStore = create<TextEditorState>((set) => ({
 
     setInView: (value) => set({ inView: value }),
 
+    setIsListening: (value) => set({ isListening: value }),
+
   setMouseActive: (value) => set({ mouseActive: value }),
 
  downloadTxtFile: () => {
@@ -58,7 +68,7 @@ const useTextEditorStore = create<TextEditorState>((set) => ({
         type: "text/plain;charset=utf-8",
       });
       element.href = URL.createObjectURL(file);
-      element.download = "thoughts_" + ascendingArray[0] + ".txt";
+      element.download = state.downloadName + ".txt"; // Fix: Use state.downloadName instead of downloadName
       document.body.appendChild(element);
       element.click();
       return state; // Return the state to not modify it
