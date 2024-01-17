@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { AiOutlineDownload, AiFillDelete } from "react-icons/ai";
 import { motion } from "framer-motion";
 import Logo from "./Logo";
 import Voicenotes from "./Voicenotes";
-import Timings from "./ui/Timings.tsx";
+import Timings from "./Timings.tsx";
 import useTextEditorStore from "../store/textEditorStore.ts";
 
 import {
@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-// import { Input } from "@/components/ui/input";
 import { DialogClose } from "@radix-ui/react-dialog";
 
 const Texteditor = () => {
@@ -35,7 +34,60 @@ const Texteditor = () => {
     clearFile,
     downloadName,
     setDownloadName,
+    isListening,
+    setIsListening,
   } = useTextEditorStore();
+
+  const [transcript, setTranscript] = useState("");
+  const recognition = useMemo(() => new window.webkitSpeechRecognition(), []);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    };
+
+    recognition.onresult = (event) => {
+      const lastResultIndex = event.results.length - 1;
+      const transcript = event.results[lastResultIndex][0].transcript;
+      setTranscript(transcript);
+      setInputText(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+    };
+
+    return () => {
+      recognition.stop();
+    };
+  }, [recognition, setIsListening, setInputText]);
+
+  const startListening = () => {
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    recognition.stop();
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
 
   useEffect(() => {
     const mouseMoveHandler = () => {
@@ -109,10 +161,11 @@ const Texteditor = () => {
 
         <input
           type="text"
+          ref={inputRef}
           placeholder={setPlaceHolderText()}
           className="bg-transparent w-full text-center flex-1 flex items-center justify-center
            absolute top-[50%]"
-          value={inputText}
+          value={isListening ? transcript : inputText}
           onChange={handleInputChange}
           onKeyDown={handleKeyPress}
         />
@@ -181,7 +234,7 @@ const Texteditor = () => {
         </motion.div>
 
         <Logo />
-        <Voicenotes />
+        <Voicenotes onClick={toggleListening} />
 
         <div className="absolute bottom-0 right-0 p-3 ">
           <span className=" md:text-5xl text-lg opacity-20 font-mono">
