@@ -1,23 +1,11 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { AiOutlineDownload, AiFillDelete } from "react-icons/ai";
+import { AiFillDelete } from "react-icons/ai";
 import { motion } from "framer-motion";
 import Logo from "./Logo";
+import { DownloadDialog } from "./DownloadDialog";
 import Voicenotes from "./Voicenotes";
 import Timings from "./Timings.tsx";
 import useTextEditorStore from "../store/textEditorStore.ts";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { DialogClose } from "@radix-ui/react-dialog";
 
 const Texteditor = () => {
   const {
@@ -30,10 +18,7 @@ const Texteditor = () => {
     setInView,
     mouseActive,
     setMouseActive,
-    downloadTxtFile,
     clearFile,
-    downloadName,
-    setDownloadName,
     isListening,
     setIsListening,
   } = useTextEditorStore();
@@ -41,6 +26,7 @@ const Texteditor = () => {
   const [transcript, setTranscript] = useState("");
   const recognition = useMemo(() => new window.webkitSpeechRecognition(), []);
   const inputRef = useRef<HTMLInputElement>(null);
+  const downloadRef = useRef(null);
 
   useEffect(() => {
     recognition.interimResults = true;
@@ -137,6 +123,42 @@ const Texteditor = () => {
     }
   }, [inputArray]);
 
+  const openDownloadDialog = () => {
+    downloadRef.current.click();
+  };
+
+  const [downloadShortcut, setDownloadShortcut] = useState(false);
+
+  const toggleDownloadShortcut = () => {
+    setDownloadShortcut(!downloadShortcut);
+    console.log("Download shortcut toggled");
+  };
+
+  const handleShortcuts = (e) => {
+    if (e.ctrlKey && e.key === "s") {
+      e.preventDefault();
+      console.log("Save");
+      toggleDownloadShortcut(); // JUST REMOVE IT LATER
+    } else if (e.ctrlKey && e.key === "d") {
+      e.preventDefault();
+      clearFile();
+    } else if (e.ctrlKey && e.key === "e") {
+      e.preventDefault();
+      toggleListening();
+    } else if (e.ctrlKey && e.key === "t") {
+      e.preventDefault();
+      setInView(!inView);
+    } else if (e.ctrlKey && e.key === "a") {
+      e.preventDefault();
+      inputRef.current.focus();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleShortcuts);
+    return () => document.removeEventListener("keydown", handleShortcuts);
+  }, [downloadShortcut]);
+
   return (
     <div className="w-screen h-screen bg-[#27272B] text-[#F9A28E] font-mono text-3xl flex flex-col justify-center items-center">
       <div className="w-full text-center mb-3 flex flex-col">
@@ -174,50 +196,10 @@ const Texteditor = () => {
           className="absolute top-0 right-0 p-3 md:p-10 cursor-pointer text-[#F9A28E]"
           animate={{ opacity: mouseActive ? 1 : 0 }}
           role="button"
-          // onClick={downloadTxtFile}
+          onClick={openDownloadDialog}
+          ref={downloadRef}
         >
-          <Dialog>
-            <DialogTrigger asChild>
-              <AiOutlineDownload
-                size={40}
-                className=" opacity-50 hover:opacity-100 transition-all ease-in"
-              />
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] dark">
-              <DialogHeader>
-                <DialogTitle className="text-center text-[#F8A28E]">
-                  Download Text File
-                </DialogTitle>
-                <DialogDescription className=" pt-4 text-center max-w-prose ">
-                  Click 'Download' to start downloading the file. If unsure,
-                  click 'Cancel'.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right text-white">
-                    Filename
-                  </Label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={downloadName}
-                    onChange={(e) => setDownloadName(e.target.value)}
-                    className="col-span-3 border border-white rounded-md bg-[#0A0A0A] text-white p-2"
-                    placeholder="Enter filename"
-                  />
-                </div>
-              </div>
-              <DialogFooter className="flex justify-between">
-                <Button type="submit" onClick={downloadTxtFile}>
-                  Save changes
-                </Button>
-                <DialogClose asChild>
-                  <Button variant="secondary">Cancel</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          {setDownloadShortcut && <DownloadDialog />}
         </motion.div>
 
         <motion.div
